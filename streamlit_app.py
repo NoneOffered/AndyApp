@@ -85,74 +85,109 @@ for t in full_idx:
     h = halving_time(t)
     tr = btc_trend(h)
     up, dn, mid = wave_envelope(h, tr)
-    trends.append(tr)
-    uppers.append(up)
-    lowers.append(dn)
-    middles.append(mid)
+    trends.append(tr); uppers.append(up)
+    lowers.append(dn); middles.append(mid)
 trends, uppers, lowers, middles = map(np.array, (trends, uppers, lowers, middles))
 
 # 6) Compute trailing stop (10% under rolling peak)
 rolling_peak = price.cummax()
 trail_stop   = rolling_peak * 0.90
 
-# 7) Prepare vertical RSI shading shapes
+# 7) Build dynamic RSI shading shapes
 thresholds = [
-    (80, "yellow", 0.3),
-    (85, "orange", 0.25),
-    (90, "darkorange", 0.2),
-    (95, "red", 0.15)
+    (80, "yellow",    0.3),
+    (85, "orange",    0.25),
+    (90, "darkorange",0.2),
+    (95, "red",       0.15),
 ]
 shapes = []
-for low, color, op in thresholds:
-    mask = rsi > low
-    # create a filled rectangle spanning dates where RSI > low
-    # here for simplicity we shade entire background with opacity
-    shapes.append(dict(
-        type="rect",
-        xref="paper", yref="paper",
-        x0=0, x1=1,
-        y0=0, y1=1,
-        fillcolor=color,
-        opacity=op,
-        layer="below",
-        line_width=0
-    ))
+for level, color, opacity in thresholds:
+    mask = rsi > level
+    in_span = False
+    for dt, is_hot in zip(rsi.index, mask):
+        if is_hot and not in_span:
+            span_start = dt
+            in_span = True
+        elif not is_hot and in_span:
+            span_end = prev_dt
+            shapes.append(dict(
+                type="rect", xref="x", yref="paper",
+                x0=span_start, x1=span_end,
+                y0=0, y1=1,
+                fillcolor=color, opacity=opacity,
+                layer="below", line_width=0
+            ))
+            in_span = False
+        prev_dt = dt
+    if in_span:
+        shapes.append(dict(
+            type="rect", xref="x", yref="paper",
+            x0=span_start, x1=prev_dt,
+            y0=0, y1=1,
+            fillcolor=color, opacity=opacity,
+            layer="below", line_width=0
+        ))
 
 # 8) Plot main chart
 fig = go.Figure()
 fig.update_layout(shapes=shapes)
 
 # Wave envelope
-fig.add_trace(go.Scatter(x=full_idx, y=uppers, line=dict(color='rgba(0,0,0,0)'), showlegend=False))
-fig.add_trace(go.Scatter(x=full_idx, y=lowers, fill='tonexty',
-                         fillcolor='rgba(0,0,200,0.2)', line=dict(color='rgba(0,0,0,0)'),
-                         name='Wave Envelope'))
+fig.add_trace(go.Scatter(
+    x=full_idx, y=uppers, line=dict(color='rgba(0,0,0,0)'), showlegend=False
+))
+fig.add_trace(go.Scatter(
+    x=full_idx, y=lowers, fill='tonexty',
+    fillcolor='rgba(0,0,200,0.2)', line=dict(color='rgba(0,0,0,0)'),
+    name='Wave Envelope'
+))
+
 # Trend & middle
-fig.add_trace(go.Scatter(x=full_idx, y=trends, mode='lines',
-                         line=dict(color='red', dash='dash'), name='Trend'))
-fig.add_trace(go.Scatter(x=full_idx, y=middles, mode='lines',
-                         line=dict(color='blue'), name='Wave Middle'))
+fig.add_trace(go.Scatter(
+    x=full_idx, y=trends, mode='lines',
+    line=dict(color='red', dash='dash'), name='Trend'
+))
+fig.add_trace(go.Scatter(
+    x=full_idx, y=middles, mode='lines',
+    line=dict(color='blue'), name='Wave Middle'
+))
+
 # BTC price
-fig.add_trace(go.Scatter(x=full_idx, y=price, mode='lines',
-                         line=dict(color='black'), name='BTC Price'))
+fig.add_trace(go.Scatter(
+    x=full_idx, y=price, mode='lines',
+    line=dict(color='black'), name='BTC Price'
+))
+
 # Trailing stop shading
-fig.add_trace(go.Scatter(x=full_idx, y=rolling_peak, mode='lines',
-                         line=dict(color='rgba(0,0,0,0)'), showlegend=False))
-fig.add_trace(go.Scatter(x=full_idx, y=trail_stop, mode='lines',
-                         line=dict(color='teal'),
-                         fill='tonexty', fillcolor='rgba(0,128,128,0.2)',
-                         name='10% Trailing Stop'))
-# Halving lines
+fig.add_trace(go.Scatter(
+    x=full_idx, y=rolling_peak, mode='lines',
+    line=dict(color='rgba(0,0,0,0)'), showlegend=False
+))
+fig.add_trace(go.Scatter(
+    x=full_idx, y=trail_stop, mode='lines',
+    line=dict(color='teal'),
+    fill='tonexty', fillcolor='rgba(0,128,128,0.2)',
+    name='10% Trailing Stop'
+))
+
+# Halving & midpoints
 halvings = [H1, H2, H3, H4]
 midpts   = [halvings[i] + (halvings[i+1]-halvings[i])/2 for i in range(3)]
-for d in halvings: fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
-for d in midpts:   fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
+for d in halvings:
+    fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
+for d in midpts:
+    fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
-# Layout
+# Layout main
 y0, y1 = log10(100), log10(200000)
 fig.update_layout(
     title="BTC Price & Wave Model with RSI-Based Shading",
-    xaxis=dict(title='Date', type='date', range=['2022-01-01','2026-12-31'], rangeslider=dict(visible=True)),
+    xaxis=dict(
+        title='Date',
+        type='date',
+        range=['2022-01-01','2026-12-31'],
+        rangeslider=dict(visible=True)
+    ),
     yaxis=dict(title='Price (USD, log)', type='log', range=[y0,y1]),
     height=600, hovermode='x unified', dragmode='zoom'
 )
