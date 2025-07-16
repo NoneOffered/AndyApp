@@ -102,16 +102,16 @@ fig.add_trace(go.Scatter(x=full_idx, y=lowers, fill='tonexty', fillcolor='rgba(0
 fig.add_trace(go.Scatter(x=full_idx, y=trends,  mode='lines', line=dict(color='red', dash='dash'), name='Trend'))
 fig.add_trace(go.Scatter(x=full_idx, y=middles, mode='lines', line=dict(color='blue'), name='Wave Middle'))
 fig.add_trace(go.Scatter(x=btc_real.index, y=btc_real.values, mode='lines', line=dict(color='black'), name='BTC Price'))
-fig.add_trace(go.Scatter(x=full_idx, y=m2_shifted, mode='lines', line=dict(color='orange', dash='dot'), name='US M2 shifted 77d', yaxis='y2'))
+#fig.add_trace(go.Scatter(x=full_idx, y=m2_shifted, mode='lines', line=dict(color='orange', dash='dot'), name='US M2 shifted 77d', yaxis='y2'))
 for d in halvings:  fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
 for d in midpoints: fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
-y0, y1 = log10(100), log10(200000)
+y0, y1 = log10(10000), log10(200000)
 fig.update_layout(
     title="BTC Price & Wave Model Extrapolated to Mar 26 2028",
     xaxis=dict(title='Date', range=['2022-01-01','2026-12-31'], rangeslider=dict(visible=True), type='date'),
     yaxis=dict(title='Price (USD, log)', type='log', range=[y0,y1]),
-    yaxis2=dict(title='US M2 (USD bln)', overlaying='y', side='right'),
+    #yaxis2=dict(title='US M2 (USD bln)', overlaying='y', side='right'),
     height=700, hovermode='x unified', dragmode='zoom'
 )
 
