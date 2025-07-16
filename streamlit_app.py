@@ -93,7 +93,7 @@ trends, uppers, lowers, middles = map(np.array, (trends, uppers, lowers, middles
 rolling_peak = price.cummax()
 trail_stop   = rolling_peak * 0.90
 
-# 7) Build dynamic RSI shading shapes
+# 7) Build dynamic RSI shading shapes (vertical spans)
 thresholds = [
     (80, "yellow",    0.3),
     (85, "orange",    0.25),
@@ -128,11 +128,11 @@ for level, color, opacity in thresholds:
             layer="below", line_width=0
         ))
 
-# 8) Plot main chart
+# 8) Plot main chart (single y-axis)
 fig = go.Figure()
 fig.update_layout(shapes=shapes)
 
-# Wave envelope
+# Wave envelope shading
 fig.add_trace(go.Scatter(
     x=full_idx, y=uppers, line=dict(color='rgba(0,0,0,0)'), showlegend=False
 ))
@@ -142,7 +142,7 @@ fig.add_trace(go.Scatter(
     name='Wave Envelope'
 ))
 
-# Trend & middle
+# Trend & wave middle
 fig.add_trace(go.Scatter(
     x=full_idx, y=trends, mode='lines',
     line=dict(color='red', dash='dash'), name='Trend'
@@ -158,7 +158,7 @@ fig.add_trace(go.Scatter(
     line=dict(color='black'), name='BTC Price'
 ))
 
-# Trailing stop shading
+# Trailing stop shading (teal)
 fig.add_trace(go.Scatter(
     x=full_idx, y=rolling_peak, mode='lines',
     line=dict(color='rgba(0,0,0,0)'), showlegend=False
@@ -173,18 +173,15 @@ fig.add_trace(go.Scatter(
 # Halving & midpoints
 halvings = [H1, H2, H3, H4]
 midpts   = [halvings[i] + (halvings[i+1]-halvings[i])/2 for i in range(3)]
-for d in halvings:
-    fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
-for d in midpts:
-    fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
+for d in halvings: fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
+for d in midpts:   fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
 # Layout main
 y0, y1 = log10(100), log10(200000)
 fig.update_layout(
     title="BTC Price & Wave Model with RSI-Based Shading",
     xaxis=dict(
-        title='Date',
-        type='date',
+        title='Date', type='date',
         range=['2022-01-01','2026-12-31'],
         rangeslider=dict(visible=True)
     ),
