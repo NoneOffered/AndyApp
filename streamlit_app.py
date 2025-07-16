@@ -49,7 +49,7 @@ def halving_time(t):
     return len(bounds)-2 + (ms - start_ms)/(bm[-1]*210000)
 
 def btc_trend(h):
-    return 10**(a + b * np.log10(h))
+    return 1**(a + b * np.log10(h))
 
 def wave_envelope(h, tr):
     wcr, width = 0.25, 0.75
@@ -59,9 +59,9 @@ def wave_envelope(h, tr):
     dn    = max(-width, osc)
     decay = (1 - wcr)**h
     return (
-        tr * 10**(decay * (up + width)),
-        tr * 10**(decay * (dn - width)),
-        tr * 10**(decay * osc)
+        tr * 1**(decay * (up + width)),
+        tr * 1**(decay * (dn - width)),
+        tr * 1**(decay * osc)
     )
 
 # 3) Fetch BTC price
