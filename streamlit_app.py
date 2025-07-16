@@ -49,7 +49,7 @@ def halving_time(t):
     return len(bounds)-2 + (ms - start_ms)/(bm[-1]*210000)
 
 def btc_trend(h):
-    return 1**(a + b * np.log10(h))
+    return 10**(a + b * np.log10(h))
 
 def wave_envelope(h, tr):
     wcr, width = 0.25, 0.75
@@ -59,9 +59,9 @@ def wave_envelope(h, tr):
     dn    = max(-width, osc)
     decay = (1 - wcr)**h
     return (
-        tr * 1**(decay * (up + width)),
-        tr * 1**(decay * (dn - width)),
-        tr * 1**(decay * osc)
+        tr * 10**(decay * (up + width)),
+        tr * 10**(decay * (dn - width)),
+        tr * 10**(decay * osc)
     )
 
 # 3) Fetch BTC price
@@ -177,7 +177,7 @@ for d in halvings: fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
 for d in midpts:   fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
 # Layout main
-y0, y1 = log10(100), log10(200000)
+y0, y1 = log10(1000), log10(200000)
 fig.update_layout(
     title="BTC Price & Wave Model with RSI-Based Shading",
     xaxis=dict(
