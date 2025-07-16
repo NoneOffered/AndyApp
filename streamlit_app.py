@@ -1,5 +1,5 @@
 # Complete Streamlit App: BTC Wave Model + M2 Shift + RSI Bands + 10% Trailing Stop
-
+# should be fine
 # Save this as `app.py` and run with:
 #   streamlit run app.py
 
