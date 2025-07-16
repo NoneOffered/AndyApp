@@ -105,8 +105,10 @@ fig.add_trace(go.Scatter(x=btc_real.index, y=btc_real.values, mode='lines', line
 #fig.add_trace(go.Scatter(x=full_idx, y=m2_shifted, mode='lines', line=dict(color='orange', dash='dot'), name='US M2 shifted 77d', yaxis='y2'))
 for d in halvings:  fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
 for d in midpoints: fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
-fig.add_vline(x='2025-09-31', line=dict(color='black'))
-fig.add_hline(y=138000, line=dict(color='black'))
+
+fig.add_vline(x="2025-09-30", line=dict(color='black'), name='2025-09-30')
+fig.add_hline(y="138000", line=dict(color='black'), name='$138,000')
+
 
 y0, y1 = log10(10000), log10(200000)
 fig.update_layout(
