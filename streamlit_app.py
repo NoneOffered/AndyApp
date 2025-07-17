@@ -150,6 +150,9 @@ fig.add_trace(go.Scatter(x=idx, y=stop, mode='lines',
                          fill='tonexty', fillcolor='rgba(0,128,128,0.2)',
                          name='10% Stop'), row=1, col=1)
 
+fig.add_vline(x="2025-09-30", line=dict(color='green'), name='2025-09-30')
+fig.add_hline(y="138000", line=dict(color='green'), name='$138,000')
+
 # 8b) Halving & midpoints
 halvings  = [H1, H2, H3, H4]
 midpoints = [halvings[i] + (halvings[i+1] - halvings[i]) / 2 for i in range(3)]
@@ -161,6 +164,8 @@ for m in midpoints:
 # 8c) RSI subplot
 fig.add_trace(go.Scatter(x=rsi.index, y=rsi, mode='lines',
                          line=dict(color='black'), name='RSI'), row=2, col=1)
+
+
 
 # 9) Layout: no sliders, log y-axis
 fig.update_layout(
