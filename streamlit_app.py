@@ -67,7 +67,7 @@ def wave_envelope(h, tr):
 
 # 3) Set reference start so that h=0 at START_REF
 START_REF = datetime(2010,7,24,17,50,42)
-h0_offset = halving_time(START_REF)
+h0_offset = 0#halving_time(START_REF)
 
 # 4) Fetch BTC price and build index
 today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
@@ -189,16 +189,16 @@ for d in halvings: fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
 for d in midpts:   fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
 # Layout main
-y0, y1 = log10(100), log10(200000)
+y0, y1 = log10(1000), log10(200000)
 fig.update_layout(
-    title="BTC Price & Wave Model (h=0 @ 2015-01-01) with RSI-Based Shading",
+    title="BTC Price & Wave Model with RSI-Based Shading",
     xaxis=dict(
         title='Date', type='date',
-        range=['2022-01-01','2026-12-31'],
+        range=['2020-01-01','2026-12-31'],
         rangeslider=dict(visible=True)
     ),
     yaxis=dict(title='Price (USD, log)', type='log', range=[y0,y1]),
-    height=600, hovermode='x unified', dragmode='zoom'
+    height=800, hovermode='x unified', dragmode='zoom'
 )
 
 st.plotly_chart(fig, use_container_width=True)
