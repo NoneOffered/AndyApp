@@ -196,13 +196,13 @@ for d in midpts:
     fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
 # Layout
-y0, y1 = log10(100), log10(200000)
+y0, y1 = log10(1000), log10(200000)
 fig.update_layout(
     title="BTC Price vs. Wave Model & RSI Overbought Shading",
     xaxis=dict(title='Date', rangeslider=dict(visible=True), type='date',
-               range=['2022-01-01','2026-12-31']),
+               range=['2018-01-01','2026-12-31']),
     yaxis=dict(title='Price (USD, log)', type='log', range=[y0,y1]),
-    height=650, hovermode='x unified', dragmode='zoom'
+    height=800, hovermode='x unified', dragmode='pan'
 )
 
 st.plotly_chart(fig, use_container_width=True)
