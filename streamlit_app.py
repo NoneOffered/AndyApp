@@ -48,6 +48,23 @@ def halving_time(t):
     start_ms = bounds[-2].timestamp()*1000
     return len(bounds)-2 + (ms - start_ms)/(bm[-1]*210000)
 
+#  ── New: set your later origin ──────────────────────────────────────────
+START_REF = datetime(2015, 1, 1)
+h0_offset = halving_time(START_REF)
+
+# ── inside your loop over full_idx ──────────────────────────────────────
+trends, uppers, lowers, middles = [], [], [], []
+for t in full_idx:
+    h_raw = halving_time(t)
+    h     = h_raw - h0_offset          # apply the offset
+    tr    = btc_trend(h)
+    up, dn, mid = wave_envelope(h, tr)
+    trends.append(tr)
+    uppers.append(up)
+    lowers.append(dn)
+    middles.append(mid)
+
+
 def btc_trend(h):
     return 10**(a + b * np.log10(h))
 
