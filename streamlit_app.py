@@ -177,7 +177,7 @@ for d in halvings: fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
 for d in midpts:   fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
 # Layout main
-y0, y1 = log10(1000), log10(200000)
+y0, y1 = log10(10000), log10(200000)
 fig.update_layout(
     title="BTC Price & Wave Model with RSI-Based Shading",
     xaxis=dict(
