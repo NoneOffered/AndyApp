@@ -66,7 +66,7 @@ def wave_envelope(h, tr):
     )
 
 # 3) Set reference start so that h=0 at START_REF
-START_REF = datetime(2015, 1, 1)
+START_REF = datetime(2010,7,24,17,50,42)
 h0_offset = halving_time(START_REF)
 
 # 4) Fetch BTC price and build index
