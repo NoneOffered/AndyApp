@@ -38,15 +38,19 @@ bm = [699768, 467896, 591047, 542715, 576868, 593781]
 a, b = 1.48, 5.44
 
 def halving_time(t):
-    ms = t.timestamp() * 1000
-    bounds = [H0_33, H0_66, H1, H2, H3, H4]
-    for i in range(len(bounds) - 1):
-        if t < bounds[i+1]:
-            start_ms = bounds[i].timestamp() * 1000
-            blocks = 210000 if i >= 1 else 70000
-            return i + (ms - start_ms) / (bm[i] * blocks)
-    start_ms = bounds[-2].timestamp() * 1000
-    return len(bounds) - 2 + (ms - start_ms) / (bm[-1] * 210000)
+    t_ms = t.timestamp() * 1000
+    if t < H0_33:
+        return t_ms / (bm0 * 70000)
+    elif t < H0_66:
+        return 0.33 + (t_ms - H0_33.timestamp()*1000) / (bm0_33 * 70000)
+    elif t < H1:
+        return 0.66 + (t_ms - H0_66.timestamp()*1000) / (bm0_66 * 70000)
+    elif t < H2:
+        return 1.0 + (t_ms - H1.timestamp()*1000) / (bm1 * 210000)
+    elif t < H3:
+        return 2.0 + (t_ms - H2.timestamp()*1000) / (bm2 * 210000)
+    else:
+        return 3.0 + (t_ms - H3.timestamp()*1000) / (bm3 * 210000)
 
 def btc_trend(h):
     return 10**(a + b * np.log10(h))
