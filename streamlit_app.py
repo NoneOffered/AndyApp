@@ -186,7 +186,7 @@ fig.update_layout(
         rangeslider=dict(visible=True)
     ),
     yaxis=dict(title='Price (USD, log)', type='log', range=[y0,y1]),
-    height=600, hovermode='x unified', dragmode='zoom'
+    height=900, hovermode='x unified', dragmode='zoom'
 )
 
 st.plotly_chart(fig, use_container_width=True)
