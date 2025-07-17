@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
-from math import sin, pi
+from math import sin, pi,log10
 
 st.set_page_config(page_title="BTC & RSI Overview", layout="wide")
 
