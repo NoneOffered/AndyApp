@@ -1,7 +1,3 @@
-# Streamlit App: BTC Wave Model & RSI Shading with Custom Start Reference
-
-# Save as app.py and run: streamlit run app.py
-
 import streamlit as st
 import requests
 import pandas as pd
@@ -56,16 +52,18 @@ def btc_trend(h):
     return 10**(a + b * np.log10(h))
 
 def wave_envelope(h, tr):
+    # h guaranteed > 0 by caller
     wcr, width = 0.25, 0.75
     phase = 0.75 / h
     osc   = sin(2 * pi * h - phase)
     up    = min(width, osc)
     dn    = max(-width, osc)
     decay = (1 - wcr) ** h
-    upper  = tr * 10**(decay * (up + width))
-    lower  = tr * 10**(decay * (dn - width))
-    middle = tr * 10**(decay * osc)
-    return upper, lower, middle
+    return (
+        tr * 10**(decay * (up + width)),
+        tr * 10**(decay * (dn - width)),
+        tr * 10**(decay * osc)
+    )
 
 # 3) Set reference start so that h=0 at START_REF
 START_REF = datetime(2015, 1, 1)
@@ -86,11 +84,14 @@ avg_loss = loss.rolling(14).mean()
 rs = avg_gain / avg_loss
 rsi = 100 - (100 / (1 + rs))
 
-# 6) Compute wave model arrays with offset
+# 6) Compute wave model arrays with h-offset and epsilon floor
+eps = 1e-6
 trends, uppers, lowers, middles = [], [], [], []
 for t in full_idx:
     h_raw = halving_time(t)
     h     = h_raw - h0_offset
+    if h <= 0:
+        h = eps
     tr    = btc_trend(h)
     up, dn, mid = wave_envelope(h, tr)
     trends.append(tr)
@@ -103,7 +104,7 @@ trends, uppers, lowers, middles = map(np.array, (trends, uppers, lowers, middles
 rolling_peak = price.cummax()
 trail_stop   = rolling_peak * 0.90
 
-# 8) Build dynamic RSI shading shapes
+# 8) Build dynamic RSI shading shapes (vertical spans)
 thresholds = [
     (80, "yellow",    0.3),
     (85, "orange",    0.25),
@@ -119,10 +120,10 @@ for level, color, opacity in thresholds:
             span_start = dt
             in_span = True
         elif not is_hot and in_span:
-            span_end = prev_dt
             shapes.append(dict(
-                type="rect", xref="x", yref="paper",
-                x0=span_start, x1=span_end,
+                type="rect",
+                xref="x", yref="paper",
+                x0=span_start, x1=prev_dt,
                 y0=0, y1=1,
                 fillcolor=color, opacity=opacity,
                 layer="below", line_width=0
@@ -131,7 +132,8 @@ for level, color, opacity in thresholds:
         prev_dt = dt
     if in_span:
         shapes.append(dict(
-            type="rect", xref="x", yref="paper",
+            type="rect",
+            xref="x", yref="paper",
             x0=span_start, x1=prev_dt,
             y0=0, y1=1,
             fillcolor=color, opacity=opacity,
@@ -183,13 +185,11 @@ fig.add_trace(go.Scatter(
 # Halving & midpoints
 halvings = [H1, H2, H3, H4]
 midpts   = [halvings[i] + (halvings[i+1]-halvings[i])/2 for i in range(3)]
-for d in halvings:
-    fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
-for d in midpts:
-    fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
+for d in halvings: fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
+for d in midpts:   fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
 # Layout main
-y0, y1 = log10(1000), log10(200000)
+y0, y1 = log10(100), log10(200000)
 fig.update_layout(
     title="BTC Price & Wave Model (h=0 @ 2015-01-01) with RSI-Based Shading",
     xaxis=dict(
@@ -198,8 +198,9 @@ fig.update_layout(
         rangeslider=dict(visible=True)
     ),
     yaxis=dict(title='Price (USD, log)', type='log', range=[y0,y1]),
-    height=900, hovermode='x unified', dragmode='zoom'
+    height=600, hovermode='x unified', dragmode='zoom'
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
 
