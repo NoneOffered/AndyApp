@@ -105,7 +105,7 @@ stop = peak * 0.90
 
 # 7) Merge RSI>50 into spans for vertical shading
 max_opacity = 0.3
-mask = rsi > 50
+mask = rsi > 70
 spans = []
 in_span = False
 for dt, hot in zip(rsi.index, mask):
