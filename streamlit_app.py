@@ -172,7 +172,7 @@ fig.update_layout(
     height=700,
     hovermode='x unified',
     xaxis=dict(rangeslider=dict(visible=False), type='date'),
-    xaxis2=dict(rangeslider=dict(visible=False), type='date'),
+    xaxis2=dict(rangeslider=dict(visible=False), type='date', range=['2018-01-01','2026-12-31']),
     yaxis=dict(title='Price (USD)', type='log', fixedrange=False),
     yaxis2=dict(title='RSI', range=[0,100], fixedrange=False),
     dragmode='zoom',
