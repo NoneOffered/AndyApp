@@ -1,3 +1,7 @@
+# Streamlit App: BTC Wave Model & RSI Shading with Custom Start Reference
+
+# Save as app.py and run: streamlit run app.py
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -38,32 +42,15 @@ bm = [699768, 467896, 591047, 542715, 576868, 593781]
 a, b = 1.48, 5.44
 
 def halving_time(t):
-    ms = t.timestamp()*1000
+    ms = t.timestamp() * 1000
     bounds = [H0_33, H0_66, H1, H2, H3, H4]
-    for i in range(len(bounds)-1):
+    for i in range(len(bounds) - 1):
         if t < bounds[i+1]:
-            start_ms = bounds[i].timestamp()*1000
-            blocks = 210000 if i>=1 else 70000
-            return i + (ms - start_ms)/(bm[i]*blocks)
-    start_ms = bounds[-2].timestamp()*1000
-    return len(bounds)-2 + (ms - start_ms)/(bm[-1]*210000)
-
-#  ── New: set your later origin ──────────────────────────────────────────
-START_REF = datetime(2015, 1, 1)
-h0_offset = halving_time(START_REF)
-
-# ── inside your loop over full_idx ──────────────────────────────────────
-trends, uppers, lowers, middles = [], [], [], []
-for t in full_idx:
-    h_raw = halving_time(t)
-    h     = h_raw - h0_offset          # apply the offset
-    tr    = btc_trend(h)
-    up, dn, mid = wave_envelope(h, tr)
-    trends.append(tr)
-    uppers.append(up)
-    lowers.append(dn)
-    middles.append(mid)
-
+            start_ms = bounds[i].timestamp() * 1000
+            blocks = 210000 if i >= 1 else 70000
+            return i + (ms - start_ms) / (bm[i] * blocks)
+    start_ms = bounds[-2].timestamp() * 1000
+    return len(bounds) - 2 + (ms - start_ms) / (bm[-1] * 210000)
 
 def btc_trend(h):
     return 10**(a + b * np.log10(h))
@@ -71,46 +58,52 @@ def btc_trend(h):
 def wave_envelope(h, tr):
     wcr, width = 0.25, 0.75
     phase = 0.75 / h
-    osc   = sin(2*pi*h - phase)
+    osc   = sin(2 * pi * h - phase)
     up    = min(width, osc)
     dn    = max(-width, osc)
-    decay = (1 - wcr)**h
-    return (
-        tr * 10**(decay * (up + width)),
-        tr * 10**(decay * (dn - width)),
-        tr * 10**(decay * osc)
-    )
+    decay = (1 - wcr) ** h
+    upper  = tr * 10**(decay * (up + width))
+    lower  = tr * 10**(decay * (dn - width))
+    middle = tr * 10**(decay * osc)
+    return upper, lower, middle
 
-# 3) Fetch BTC price
+# 3) Set reference start so that h=0 at START_REF
+START_REF = datetime(2015, 1, 1)
+h0_offset = halving_time(START_REF)
+
+# 4) Fetch BTC price and build index
 today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
 btc_real  = fetch_fred("CBBTCUSD", "2010-07-24", today_str).resample("D").ffill()
 full_idx  = pd.date_range("2010-07-24", H4, freq="D")
 price     = btc_real.reindex(full_idx).ffill()
 
-# 4) Compute RSI (14-day)
+# 5) Compute RSI (14-day)
 delta = price.diff()
-gain  = delta.where(delta>0,0.0)
-loss  = -delta.where(delta<0,0.0)
+gain  = delta.where(delta > 0, 0.0)
+loss  = -delta.where(delta < 0, 0.0)
 avg_gain = gain.rolling(14).mean()
 avg_loss = loss.rolling(14).mean()
-rs = avg_gain/avg_loss
-rsi = 100 - (100/(1+rs))
+rs = avg_gain / avg_loss
+rsi = 100 - (100 / (1 + rs))
 
-# 5) Compute wave model arrays
+# 6) Compute wave model arrays with offset
 trends, uppers, lowers, middles = [], [], [], []
 for t in full_idx:
-    h = halving_time(t)
-    tr = btc_trend(h)
+    h_raw = halving_time(t)
+    h     = h_raw - h0_offset
+    tr    = btc_trend(h)
     up, dn, mid = wave_envelope(h, tr)
-    trends.append(tr); uppers.append(up)
-    lowers.append(dn); middles.append(mid)
+    trends.append(tr)
+    uppers.append(up)
+    lowers.append(dn)
+    middles.append(mid)
 trends, uppers, lowers, middles = map(np.array, (trends, uppers, lowers, middles))
 
-# 6) Compute trailing stop (10% under rolling peak)
+# 7) Compute trailing stop (10% under rolling peak)
 rolling_peak = price.cummax()
 trail_stop   = rolling_peak * 0.90
 
-# 7) Build dynamic RSI shading shapes (vertical spans)
+# 8) Build dynamic RSI shading shapes
 thresholds = [
     (80, "yellow",    0.3),
     (85, "orange",    0.25),
@@ -145,7 +138,7 @@ for level, color, opacity in thresholds:
             layer="below", line_width=0
         ))
 
-# 8) Plot main chart (single y-axis)
+# 9) Plot main chart (single y-axis)
 fig = go.Figure()
 fig.update_layout(shapes=shapes)
 
@@ -190,13 +183,15 @@ fig.add_trace(go.Scatter(
 # Halving & midpoints
 halvings = [H1, H2, H3, H4]
 midpts   = [halvings[i] + (halvings[i+1]-halvings[i])/2 for i in range(3)]
-for d in halvings: fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
-for d in midpts:   fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
+for d in halvings:
+    fig.add_vline(x=d, line=dict(color='gray', dash='dot'))
+for d in midpts:
+    fig.add_vline(x=d, line=dict(color='gray', dash='dash'))
 
 # Layout main
-y0, y1 = log10(10000), log10(200000)
+y0, y1 = log10(1000), log10(200000)
 fig.update_layout(
-    title="BTC Price & Wave Model with RSI-Based Shading",
+    title="BTC Price & Wave Model (h=0 @ 2015-01-01) with RSI-Based Shading",
     xaxis=dict(
         title='Date', type='date',
         range=['2022-01-01','2026-12-31'],
@@ -207,3 +202,4 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
